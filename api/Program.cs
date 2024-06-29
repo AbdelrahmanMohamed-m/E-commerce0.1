@@ -4,6 +4,7 @@ using api.ApplicationLayer.Service;
 using api.ControlLayer.Interfaces;
 using api.DataLayer.Data;
 using api.DataLayer.Entities;
+using api.InfrastructureLayer.ExceptionHandler;
 using api.InfrastructureLayer.IRepos;
 using api.InfrastructureLayer.Repos;
 using api.Service;
@@ -29,6 +30,8 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IOrderRepo, OrderRepo>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 builder.Services.AddOutputCache(opt => { opt.AddBasePolicy(x => x.Expire(TimeSpan.FromMinutes(10.0))); });
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
@@ -96,6 +99,7 @@ builder.Services.AddAuthentication(options =>
 );
 
 
+
 var app = builder.Build();
 
 // Database seeding
@@ -113,6 +117,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseExceptionHandler();
 app.UseOutputCache();
 app.UseHttpsRedirection();
 app.MapControllers();
