@@ -8,13 +8,11 @@ namespace api.PresentationLayer.Controllers
     [Route("api/Product")]
     public class ProductController(IProductService productService) : ControllerBase
     {
-        private readonly IProductService _productService = productService;
-
         [HttpGet]
         public async Task<IActionResult> GetProducts([FromQuery] QueryProductObject queryable)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var products = await _productService.GetAllProducts(queryable);
+            var products = await productService.GetAllProducts(queryable);
             return Ok(products);
         }
     }

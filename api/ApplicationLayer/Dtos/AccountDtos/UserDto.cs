@@ -13,5 +13,6 @@ namespace api.DataLayer.Dtos.AccountDto
         public String email { get; set; } = "";
 
         public String token { get; set; } = "";
+        
     }
 }

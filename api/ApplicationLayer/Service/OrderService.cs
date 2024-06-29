@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using api.ApplicationLayer.Dtos;
 using api.ApplicationLayer.IService;
 using api.ApplicationLayer.Mappers;
@@ -9,13 +5,10 @@ using api.InfrastructureLayer.IRepos;
 
 namespace api.ApplicationLayer.Service
 {
-    public class OrderService : IOrderService
+    public class OrderService(IOrderRepo orderRepo) : IOrderService
     {
-        private readonly IOrderRepo _orderRepo;
-        public OrderService(IOrderRepo orderRepo)
-        {
-            _orderRepo = orderRepo;
-        }
+        private readonly IOrderRepo _orderRepo = orderRepo;
+
         public async Task<List<OrderDto>> GetOrders()
         {
             var orders = await _orderRepo.GetOrders();
