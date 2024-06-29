@@ -99,13 +99,13 @@ builder.Services.AddAuthentication(options =>
 var app = builder.Build();
 
 // Database seeding
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<ApplicationDBContenxt>();
-    var seeder = new DatabaseSeeder(context);
-    seeder.SeedDataproducts();
-}
+// using (var scope = app.Services.CreateScope())
+// {
+//     var services = scope.ServiceProvider;
+//     var context = services.GetRequiredService<ApplicationDBContenxt>();
+//     var seeder = new DatabaseSeeder(context);
+//     seeder.SeedDataproducts();
+// }
 
 if (app.Environment.IsDevelopment())
 {
