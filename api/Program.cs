@@ -1,15 +1,15 @@
-using api;
+using System.Threading.RateLimiting;
 using api.ApplicationLayer.IService;
 using api.ApplicationLayer.Service;
 using api.ControlLayer.Interfaces;
 using api.DataLayer.Data;
 using api.DataLayer.Entities;
-using api.InfrastructureLayer.ExceptionHandler;
 using api.InfrastructureLayer.IRepos;
 using api.InfrastructureLayer.Repos;
 using api.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -30,8 +30,18 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IOrderRepo, OrderRepo>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddProblemDetails();
+
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddConcurrencyLimiter("ConcurrencyRateLimiter", opt =>
+    {
+        opt.PermitLimit = 1;
+        opt.QueueLimit = 1;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    }).RejectionStatusCode = 429;
+});
+
 builder.Services.AddOutputCache(opt => { opt.AddBasePolicy(x => x.Expire(TimeSpan.FromMinutes(10.0))); });
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
@@ -99,7 +109,6 @@ builder.Services.AddAuthentication(options =>
 );
 
 
-
 var app = builder.Build();
 
 // Database seeding
@@ -116,8 +125,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseExceptionHandler();
+app.UseRateLimiter();
 app.UseOutputCache();
 app.UseHttpsRedirection();
 app.MapControllers();

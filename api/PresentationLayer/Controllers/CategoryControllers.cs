@@ -1,5 +1,6 @@
 using api.ApplicationLayer.IService;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace api.PresentationLayer.Controllers
 {
@@ -8,13 +9,12 @@ namespace api.PresentationLayer.Controllers
     public class CategoryControllers(ICategoryService categoryService) : ControllerBase
     {
         [HttpGet]
+        [EnableRateLimiting("ConcurrencyRateLimiter")]
         public async Task<IActionResult> GetCategories()
         {
-             throw new Exception("This is a test exception");
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var categories = await categoryService.GetallCategories();
-            return Ok(categories);  
+            return Ok(categories);
         }
-
     }
 }
