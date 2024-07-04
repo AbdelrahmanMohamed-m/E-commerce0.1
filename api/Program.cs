@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using api.ApplicationLayer.IService;
 using api.ApplicationLayer.Service;
+using api.Config;
 using api.ControlLayer.Interfaces;
 using api.DataLayer.Data;
 using api.DataLayer.Entities;
@@ -11,16 +12,24 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+var dbConfig = new DataBaseConfig();
+builder.Configuration.GetSection("DataBaseConfig").Bind(dbConfig);
 // Rest of your code...
 builder.Services.AddControllers();
 builder.Services.AddDbContext<ApplicationDBContenxt>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+        action => { action.CommandTimeout(dbConfig.TimeoutTime); });
+    // only in development
+    options.EnableDetailedErrors(dbConfig.DetailedError);
+    options.EnableSensitiveDataLogging(dbConfig.SensitiveDataLogging);
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IProductRepo, ProductRepo>();
@@ -36,13 +45,13 @@ builder.Services.AddRateLimiter(options =>
 {
     options.AddConcurrencyLimiter("ConcurrencyRateLimiter", opt =>
     {
-        opt.PermitLimit = 1;
-        opt.QueueLimit = 1;
+        opt.PermitLimit = 20;
+        opt.QueueLimit = 5;
         opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
     }).RejectionStatusCode = 429;
 });
-
-builder.Services.AddOutputCache(opt => { opt.AddBasePolicy(x => x.Expire(TimeSpan.FromMinutes(10.0))); });
+builder.Services.AddResponseCaching();
+//builder.Services.AddOutputCache(opt => { opt.AddBasePolicy(x => x.Expire(TimeSpan.FromMinutes(10.0))); });
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 builder.Services.AddSwaggerGen(option =>
@@ -125,8 +134,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseRateLimiter();
-app.UseOutputCache();
+//app.UseOutputCache();
+app.UseResponseCaching();
 app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();

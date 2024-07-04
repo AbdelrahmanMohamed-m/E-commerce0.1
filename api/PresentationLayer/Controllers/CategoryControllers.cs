@@ -9,7 +9,7 @@ namespace api.PresentationLayer.Controllers
     public class CategoryControllers(ICategoryService categoryService) : ControllerBase
     {
         [HttpGet]
-        [EnableRateLimiting("ConcurrencyRateLimiter")]
+        [ResponseCache(Duration = 10)]
         public async Task<IActionResult> GetCategories()
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
